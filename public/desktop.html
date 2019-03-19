@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+    <head>
+            <title>A3</title>
+
+            <script src="js/aframe-v0.8.2.min.js"></script>
+            <script src="js/socket.io.min.js"></script>
+            <script src="//cdn.rawgit.com/donmccurdy/aframe-physics-system/v3.3.0/dist/aframe-physics-system.min.js"></script>
+            <script src="//unpkg.com/aframe-seek-position-component/dist/aframe-seek-position-component.min.js"></script> 
+    </head>
+    <body>
+        
+        <script>
+            let socket = io();
+
+            //default connect event
+            socket.on('connect', function() {
+                console.log("connected!");
+            });
+
+            document.querySelector('#red').addEventListener('click', function() {
+                socket.emit('red');
+            });
+
+            let noTouchyList = [];
+            //default connect event
+            socket.on('connect', function() { 
+                console.log("connected!");
+            });
+            socket.on('unavailable', function(data) {
+                console.log(socket.id + " picked up " + data);
+                noTouchyList.push(data);
+            });
+            socket.on('available', function(data) {
+                console.log(socket.id + " put down " + data);
+                noTouchyList.splice(noTouchyList.indexOf(data), 1);
+            });
+        
+        </script>
+
+        <a-scene physics="debug: true; restitution: 0.3">
+            <!---------------- CAMERA ---------------->
+            <a-entity id="cameraRig" position="0 1.9 0" rotation="0 0 0">
+                <a-camera id="sceneCamera">
+                    <a-entity id="cursor" cursor="rayOrigin: mouse" position="0 0 -1"></a-entity>
+                </a-camera>
+            </a-entity>
+
+
+            <!---------------- LIGHTING ---------------->
+            <a-light type="ambient" color="white" position="35 5 0" intensity="0.6"></a-light>
+            <a-light type="ambient" color="white" position="-0.15682 5.09305 0" intensity="0.4" light="type:point;color:#f7a83e"></a-light>
+
+
+
+            <!---------------- A-FRAME ENTITIES ---------------->
+        
+            <!-- SOUNDS ENTITIES -->
+            <a-entity id="music" sound="src:#musicSrc; volume: 1; loop: true; positional:false" ></a-entity>
+            <a-entity id="ambiance" sound="src:#ambianceSrc; volume: .4; loop: true; positional:false"></a-entity>
+
+            <a-sphere class="hamster" seek-position="10 0 10"></a-sphere>
+
+            <!-- GROUND & SKY -->
+            <a-plane static-body id="ground" position="0 0 5" width="30" height="30" rotation="-90 0 0" color="#a5a5a5" shadow></a-plane> 
+                    
+            <a-sky color="#ECECEC" ></a-sky>
+            <a-entity   id="sky"
+                        rotation="0 180 0"
+                        geometry="primitive: sphere; radius: 1000"
+                        material="shader: flat; side: back">
+            </a-entity>
+        </a-scene>
+    </body>
+</html>

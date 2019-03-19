@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="js/aframe-v0.8.2.min.js"></script>
+        <script src="js/socket.io.min.js"></script>
+    </head>
+    <body>
+        
+        <script>
+            let socket = io();
+
+            //default connect event
+            socket.on('connect', function() {
+                console.log("connected!");
+            });
+
+            socket.on('color_change', function(data) {
+                //create rgb color string for css
+                let colorStr = 'rgb(' + data.r + ',' + data.g + ',' + data.b + ')';
+                console.log("color received: " + colorStr);
+
+                //set background color with received color
+                document.body.style.backgroundColor = colorStr;
+            });
+        </script>
+    </body>
+</html>
