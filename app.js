@@ -28,13 +28,23 @@ socketIO.on('connection', function(socket) {
     //custom events
     //socket = one client
     //socketIO.sockets = all clients
-    socket.on('objUnavailble', function(data) {
-        console.log('Got to sockets');
-        socketIO.sockets.emit('unavailable', data);
+    socket.on('needSmallShape', function(data) {
+        console.log('Small Shape Requested');
+        socketIO.sockets.emit('requestSmall', data);
     });
-    socket.on('objAvailble', function(data) {
-        socketIO.sockets.emit('available', data);
+    socket.on('needMedShape', function(data) {
+        console.log('Med Shape Requested');
+        socketIO.sockets.emit('requestMed', data);
     });
+    socket.on('needBigShape', function(data) {
+        console.log('Big Shape Requested');
+        socketIO.sockets.emit('requestBig', data);
+    });
+    socket.on('newShape', function(data) {
+        console.log('Shape Created');
+        socketIO.sockets.emit('appendShape', data);
+    });
+
 });
 
 //finally, start server
