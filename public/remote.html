@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>A3-Mobile</title>
+        <script src="js/aframe-v0.8.2.min.js"></script>
+        <script src="js/socket.io.min.js"></script>
+        <script>
+            AFRAME.registerComponent('editable', {
+                schema: {
+                    id: {default: 'entity'},
+                },
+
+                init: function()
+                {
+                    let el = this.el;
+                    el.addEventListener('mousedown', this.ondragEnd);
+                    el.addEventListener('mouseup', this.ondragEnd);
+                    console.log(el);
+
+                    //this.soundElem = document.querySelector('#canSound');
+                    this.ondragStart = this.ondragStart.bind(this);
+                    this.ondragEnd = this.ondragEnd.bind(this);
+                    //this.followMouse = this.followMouse.bind(this);
+                    //this.createMe = this.createMe.bind(this);
+                },
+                update: function()
+                {
+                    var el = this.el;
+
+                    
+                },
+                ondragStart: function(evt)
+                {
+                    let el = this.el;
+                    this.id = evt.target.id;    // for setting primitive type
+                    console.log('drag start');
+
+                    
+                    
+                },
+                ondragEnd: function(evt)
+                {
+                    console.log('drag end');
+                    //socket.emit('newShape', this.id);
+                },
+            });
+        </script>
+    </head>
+   
+    <body>
+        <script>
+            function onSceneLoad(){
+                document.querySelector('#box').addEventListener('click', createEl);
+                document.querySelector('#sphere').addEventListener('click', createEl);
+                document.querySelector('#cylinder').addEventListener('click', createEl);
+
+                let wrapper = document.querySelector('#workspace');
+                let socket = io();
+                //default connect event
+                socket.on('connect', function() {
+                    console.log("connected!");
+                });
+        
+                socket.on('requestSmall', function(data) {
+                    console.log('Small boi');
+                });
+
+                socket.on('requestMed', function(data) {
+                    console.log('Med boi');
+                });
+                socket.on('requestBig', function(data) {
+                    console.log('Big boi');
+                });
+                socket.on('Switch Screens', function(data) {
+                    window.location.href='/desktop.html';
+                });
+
+                function createEl(e){
+                    console.log('Creating new shape', e);
+                    let newEl = document.createElement('a-' + e.target.id);
+                    newEl.setAttribute('editable', '');
+                    console.log(newEl);
+                    wrapper.appendChild(newEl);
+                };
+              
+
+        };
+        </script>
+
+
+
+        <a-scene>
+            <!---------------- CAMERA ---------------->
+            <a-entity id="cameraRig" position="0 4 0" rotation="0 0 0">
+                <a-entity camera id="sceneCamera" 
+                            look-controls-enabled='false'>
+                    <a-entity id="cursor" 
+                            cursor="rayOrigin: mouse" 
+                            position="0 0 -1">
+                    </a-entity>
+                </a-entity>
+            </a-entity>
+
+            <!---------------- A-FRAME ENTITIES ---------------->
+
+            <a-box id="box" position="5 7 -6"></a-box>
+            <a-sphere id="sphere" position="5 4.5 -6"></a-sphere>
+            <a-cylinder id="cylinder" position="5 2 -6"></a-cylinder>
+            
+            <a-entity id="workspace" position="0 4 -3"></a-entity>
+            <a-plane id="send_button" position="-6 7 -6" width="3" height="2" rotation="0 15 0" material="src:#small_tex;" shadow></a-plane> 
+
+
+            <!-- GROUND & SKY -->
+            <a-plane static-body id="ground" position="0 0 5" width="30" height="30" rotation="-90 0 0" color="#a5a5a5" shadow></a-plane> 
+                                
+            <a-sky color="#bfd7ff" ></a-sky>
+        </a-scene>
+
+
+
+        <script>
+                document.querySelector('a-scene').addEventListener('loaded', onSceneLoad);
+        </script>
+    </body> 
+</html>

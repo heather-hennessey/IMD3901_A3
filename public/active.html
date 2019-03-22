@@ -16,16 +16,16 @@
 
 
                 document.querySelector('#small_button').addEventListener('click', function(e) {
-                    console.log(e);
                     socket.emit('needSmallShape');
                 });
                 document.querySelector('#med_button').addEventListener('click', function(e) {
-                    console.log(e);
                     socket.emit('needMedShape');
                 });
                 document.querySelector('#big_button').addEventListener('click', function(e) {
-                    console.log(e);
                     socket.emit('needBigShape');
+                });
+                document.querySelector('#done_button').addEventListener('click', function(e) {
+                    socket.emit('complete');
                 });
             
             let socket = io();
@@ -85,7 +85,8 @@
             <!-- <a-entity id="music" sound="src:#musicSrc; volume: 1; loop: true; positional:false" ></a-entity>
             <a-entity id="ambiance" sound="src:#ambianceSrc; volume: .4; loop: true; positional:false"></a-entity> -->
 
-    
+            <a-plane id="done_button" position="-7 7 -6" width="5" height="2" rotation="0 15 0" material="src:#small_tex;" shadow></a-plane> 
+
             <a-plane id="small_button" position="7 7 -6" width="5" height="2" rotation="0 -15 0" material="src:#small_tex;" shadow></a-plane> 
             <a-plane id="med_button" position="7 4.5 -6" width="5" height="2" rotation="0 -15 0" material="src:#med_tex;" shadow></a-plane> 
             <a-plane id="big_button" position="7 2 -6" width="5" height="2" rotation="0 -15 0" material="src:#big_tex;" shadow></a-plane> 
