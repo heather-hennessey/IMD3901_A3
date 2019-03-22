@@ -13,36 +13,50 @@
                 init: function()
                 {
                     let el = this.el;
-                    el.addEventListener('mousedown', this.ondragEnd);
+                    el.addEventListener('mousedown', this.ondragStart);
                     el.addEventListener('mouseup', this.ondragEnd);
+
                     console.log(el);
 
                     //this.soundElem = document.querySelector('#canSound');
                     this.ondragStart = this.ondragStart.bind(this);
                     this.ondragEnd = this.ondragEnd.bind(this);
+                    this.scale = this.scale.bind(this);
+                    this.getPos = this.getPos.bind(this);
+
                     //this.followMouse = this.followMouse.bind(this);
                     //this.createMe = this.createMe.bind(this);
                 },
-                update: function()
-                {
-                    var el = this.el;
-
-                    
-                },
+                
                 ondragStart: function(evt)
                 {
-                    let el = this.el;
-                    this.id = evt.target.id;    // for setting primitive type
                     console.log('drag start');
 
-                    
-                    
+                    let el = evt.target;
+                    el.setAttribute('height', '');
+
+                    this.components['editable'].scale();
                 },
                 ondragEnd: function(evt)
                 {
                     console.log('drag end');
+                    let el = evt.target;
+
+                    this.el.sceneEl.canvas.removeEventListener('mousemove', this.getPos);            
+                    el.setAttribute('height', '1.3');
+
+                    this.id = evt.target.id;    // for setting primitive type
                     //socket.emit('newShape', this.id);
                 },
+                scale: function(){
+                    console.log(this);
+                    this.el.sceneEl.canvas.addEventListener('mousemove', this.getPos);
+                        
+                },
+                getPos: function(e){
+                    console.log(e.pageX + " / " + e.pageY);
+
+                }
             });
         </script>
     </head>
