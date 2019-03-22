@@ -13,7 +13,7 @@
             function onSceneLoad(){
                 let cursor = document.querySelector('#cursor');
                 let wrapper = document.querySelector('#drawing');
-
+                let objList = [];
 
                 document.querySelector('#small_button').addEventListener('click', function(e) {
                     socket.emit('needSmallShape');
@@ -25,13 +25,14 @@
                     socket.emit('needBigShape');
                 });
                 document.querySelector('#done_button').addEventListener('click', function(e) {
-                    socket.emit('complete');
+                    socket.emit('complete', objList);
+                    console.log(socket.id);
                 });
             
             let socket = io();
 
             //default connect event
-            socket.on('connect', function() {
+            socket.on('connect', function(socket) {
                 console.log("connected!");
             });
 
@@ -39,8 +40,8 @@
                 console.log('New Shape Received');
                 console.log(data);
                 let newEl = document.createElement('a-entity');
-                newEl.setAttribute('geometry', {primitive: data.description.id});
-                newEl.attributes.geometry.value="primitive:" + data.description.id;
+                newEl.setAttribute('geometry', data);   //{primitive: data.description.id}
+                newEl.attributes.geometry.value="primitive:" + data; //.description.id;
                 newEl.object3D.position.set(0, -1, -2);
 
                 newEl.addEventListener('click', function(e){
@@ -52,7 +53,9 @@
             
             function placeObj(e){
                 let pos = e.target.object3D.localToWorld(e.target.object3D.position);
-                console.log(pos);
+                pos = [pos.x, pos.y, pos.z];
+                newObj = {srcElement: {components: {geometry: {attrValue: {primitive: e.srcElement.components.geometry.attrValue.primitive}}}}, detail: {cursorEl: {attributes: {position: {value: pos}} }}};
+                objList.push(newObj);
                 wrapper.appendChild(e.target);
                 //newEl.setAttribute('position', pos);
                 console.log(e.target);

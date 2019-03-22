@@ -61,12 +61,9 @@ socketIO.on('connection', function(socket) {
     });
     socket.on('complete', function(data) {
         console.log('Completed Drawing');
-        
-        socketIO.sockets.emit('Switch Screens', data);
-        
-        console.log('new page');
-
+        socketIO.sockets.emit('recreate', data);
     });
+ 
 
 });
 

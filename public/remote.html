@@ -16,8 +16,6 @@
                     el.addEventListener('mousedown', this.ondragStart);
                     el.addEventListener('mouseup', this.ondragEnd);
 
-                    console.log(el);
-
                     //this.soundElem = document.querySelector('#canSound');
                     this.ondragStart = this.ondragStart.bind(this);
                     this.ondragEnd = this.ondragEnd.bind(this);
@@ -41,16 +39,16 @@
                 {
                     console.log('drag end');
                     let el = evt.target;
-
+                    console.log(this);
                     this.el.sceneEl.canvas.removeEventListener('mousemove', this.getPos);            
                     el.setAttribute('height', '1.3');
 
-                    this.id = evt.target.id;    // for setting primitive type
-                    //socket.emit('newShape', this.id);
+                    
                 },
                 scale: function(){
                     console.log(this);
                     this.el.sceneEl.canvas.addEventListener('mousemove', this.getPos);
+
                         
                 },
                 getPos: function(e){
@@ -64,12 +62,21 @@
     <body>
         <script>
             function onSceneLoad(){
-                document.querySelector('#box').addEventListener('click', createEl);
-                document.querySelector('#sphere').addEventListener('click', createEl);
-                document.querySelector('#cylinder').addEventListener('click', createEl);
-
-                let wrapper = document.querySelector('#workspace');
                 let socket = io();
+                let currObj = "box";
+                let wrapper = document.querySelector('#workspace');
+                let scene = document.querySelector('a-scene');
+                document.querySelector('#box_Init').addEventListener('click', createEl);
+                document.querySelector('#sphere_Init').addEventListener('click', createEl);
+                document.querySelector('#cylinder_Init').addEventListener('click', createEl);
+                document.querySelector('#send_button').addEventListener('click', function(e)
+                {
+                    socket.emit('newShape', currObj);
+                    obj = wrapper.querySelector('#'+currObj);
+                    wrapper.removeChild(obj);
+                });
+                
+                
                 //default connect event
                 socket.on('connect', function() {
                     console.log("connected!");
@@ -85,15 +92,25 @@
                 socket.on('requestBig', function(data) {
                     console.log('Big boi');
                 });
-                socket.on('Switch Screens', function(data) {
-                    window.location.href='/desktop.html';
+                socket.on('recreate', function(data) {
+                    for(i in data)
+                    {
+                        createEl(data[i]);
+                    }
+                    
                 });
 
                 function createEl(e){
                     console.log('Creating new shape', e);
-                    let newEl = document.createElement('a-' + e.target.id);
-                    newEl.setAttribute('editable', '');
+                    let newEl = document.createElement('a-' + e.srcElement.components.geometry.attrValue.primitive);
+                    let pos = e.detail.cursorEl.attributes.position.value;
+                    newEl.object3D.position.set(pos[0], pos[1]-2,pos[2]);
+
+                    newEl.setAttribute('id', e.srcElement.components.geometry.attrValue.primitive);
                     console.log(newEl);
+                    currObj = newEl.id;
+
+                    newEl.setAttribute('editable', '');
                     wrapper.appendChild(newEl);
                 };
               
@@ -105,8 +122,8 @@
 
         <a-scene>
             <!---------------- CAMERA ---------------->
-            <a-entity id="cameraRig" position="0 4 0" rotation="0 0 0">
-                <a-entity camera id="sceneCamera" 
+            <a-entity id="cameraRig" position="" rotation="0 0 0">
+                <a-entity camera id="sceneCamera" position="0 5 0"
                             look-controls-enabled='false'>
                     <a-entity id="cursor" 
                             cursor="rayOrigin: mouse" 
@@ -117,9 +134,9 @@
 
             <!---------------- A-FRAME ENTITIES ---------------->
 
-            <a-box id="box" position="5 7 -6"></a-box>
-            <a-sphere id="sphere" position="5 4.5 -6"></a-sphere>
-            <a-cylinder id="cylinder" position="5 2 -6"></a-cylinder>
+            <a-box id="box_Init" position="5 7 -6"></a-box>
+            <a-sphere id="sphere_Init" position="5 4.5 -6"></a-sphere>
+            <a-cylinder id="cylinder_Init" position="5 2 -6"></a-cylinder>
             
             <a-entity id="workspace" position="0 4 -3"></a-entity>
             <a-plane id="send_button" position="-6 7 -6" width="3" height="2" rotation="0 15 0" material="src:#small_tex;" shadow></a-plane> 
@@ -135,6 +152,7 @@
 
         <script>
                 document.querySelector('a-scene').addEventListener('loaded', onSceneLoad);
+               
         </script>
     </body> 
 </html>
