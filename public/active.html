@@ -40,8 +40,8 @@
                 console.log('New Shape Received');
                 console.log(data);
                 let newEl = document.createElement('a-entity');
-                newEl.setAttribute('geometry', data);   //{primitive: data.description.id}
-                newEl.attributes.geometry.value="primitive:" + data; //.description.id;
+                newEl.setAttribute('geometry', data.id);   //{primitive: data.description.id}
+                newEl.attributes.geometry.value="primitive:" + data.id; //.description.id;
                 newEl.object3D.position.set(0, -1, -2);
 
                 newEl.addEventListener('click', function(e){
@@ -67,7 +67,7 @@
             <!---------------- CAMERA ---------------->
             <a-entity id="cameraRig" position="0 2 0" rotation="0 0 0">
                 <a-camera id="sceneCamera">
-                    <a-entity id="cursor" cursor="rayOrigin: mouse" position="0 0 -1"></a-entity>
+                    <a-entity id="cursor" cursor="rayOrigin: mouse" position="0 1 -1"></a-entity>
                 </a-camera>
             </a-entity>
 

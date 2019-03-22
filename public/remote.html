@@ -28,32 +28,25 @@
                 
                 ondragStart: function(evt)
                 {
-                    console.log('drag start');
-
                     let el = evt.target;
-                    el.setAttribute('height', '');
-
+                    el.setAttribute('geometry', 'height', '0');
+                    console.log(el);
                     this.components['editable'].scale();
                 },
                 ondragEnd: function(evt)
                 {
-                    console.log('drag end');
-                    let el = evt.target;
-                    console.log(this);
-                    this.el.sceneEl.canvas.removeEventListener('mousemove', this.getPos);            
-                    el.setAttribute('height', '1.3');
-
-                    
+                    this.components['editable'].stop();
                 },
                 scale: function(){
-                    console.log(this);
-                    this.el.sceneEl.canvas.addEventListener('mousemove', this.getPos);
-
-                        
+                    this.el.sceneEl.canvas.addEventListener('mousemove', this.getPos);  
+                },
+                stop: function(){
+                    this.el.sceneEl.canvas.removeEventListener('mousemove', this.getPos);  
                 },
                 getPos: function(e){
-                    console.log(e.pageX + " / " + e.pageY);
-
+                    
+                    let h_size =  e.pageX / 100;
+                    this.el.setAttribute('geometry', 'height', h_size);
                 }
             });
         </script>
@@ -63,7 +56,7 @@
         <script>
             function onSceneLoad(){
                 let socket = io();
-                let currObj = "box";
+                var currObj = {id:"box", height: 0};
                 let wrapper = document.querySelector('#workspace');
                 let scene = document.querySelector('a-scene');
                 document.querySelector('#box_Init').addEventListener('click', createEl);
@@ -71,8 +64,9 @@
                 document.querySelector('#cylinder_Init').addEventListener('click', createEl);
                 document.querySelector('#send_button').addEventListener('click', function(e)
                 {
+                    obj = wrapper.querySelector('#'+currObj.id);
+                    currObj.height = obj.height;
                     socket.emit('newShape', currObj);
-                    obj = wrapper.querySelector('#'+currObj);
                     wrapper.removeChild(obj);
                 });
                 
@@ -102,13 +96,14 @@
 
                 function createEl(e){
                     console.log('Creating new shape', e);
-                    let newEl = document.createElement('a-' + e.srcElement.components.geometry.attrValue.primitive);
+                    let newEl = document.createElement('a-entity');
+                    newEl.setAttribute("geometry", {primitive: e.srcElement.components.geometry.attrValue.primitive});
                     let pos = e.detail.cursorEl.attributes.position.value;
-                    newEl.object3D.position.set(pos[0], pos[1]-2,pos[2]);
+                    newEl.object3D.position.set(pos[0], pos[1]-1,pos[2]);
 
                     newEl.setAttribute('id', e.srcElement.components.geometry.attrValue.primitive);
                     console.log(newEl);
-                    currObj = newEl.id;
+                    //currObj.id = newEl.id;
 
                     newEl.setAttribute('editable', '');
                     wrapper.appendChild(newEl);
@@ -117,8 +112,6 @@
 
         };
         </script>
-
-
 
         <a-scene>
             <!---------------- CAMERA ---------------->
