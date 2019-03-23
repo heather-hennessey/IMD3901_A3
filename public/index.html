@@ -60,45 +60,27 @@
         </div>
     <div class="title-header">
         <h1>
-            Select a Game Play Mode
+            Click the button to begin!
         </h1>
     </div>
     <div class="title-header">
-        <div class="container">
-    <button class="button" type="button" onclick="comp()">
-        Competitive
-    </button></div>
-    <button class="button" type="button" onclick="collab()">
-            Collaborative
+    <button class="button" type="button" onclick="start()">
+            Play
     </button>
     </div>
 
 </body>
 <script>
     let socket = io();
-    socket.on('remoteScreen', function() {
-        console.log('shaper');
+    
+    socket.on('go', function() {
         window.location.href='/remote.html';
 
     });
-    socket.on('activeScreen', function() {
-        console.log('maker');
-        window.location.href='/active.html';
 
-    });
 
-    function comp(){
-        console.log("compppp!");
-
-        socket.emit('compGame');
-        window.location.href='/active.html';
-
-    }
-    function collab(){
-        console.log("colabbbb!");
-
-        socket.emit('collabGame');
-
+    function start(){
+        socket.emit('begin');
         window.location.href='/active.html';
     }
         

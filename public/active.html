@@ -5,24 +5,31 @@
 
             <script src="js/aframe-v0.8.2.min.js"></script>
             <script src="js/socket.io.min.js"></script>
-            <script src="//cdn.rawgit.com/donmccurdy/aframe-physics-system/v3.3.0/dist/aframe-physics-system.min.js"></script>
+            <script src="https://unpkg.com/aframe-particle-system-component@1.0.x/dist/aframe-particle-system-component.min.js"></script>   <!--Particles-->
+
     </head>
     <body>
-        
         <script>
             function onSceneLoad(){
                 let cursor = document.querySelector('#cursor');
                 let wrapper = document.querySelector('#drawing');
                 let objList = [];
+                let scene = document.querySelector('a-scene');
+
 
                 document.querySelector('#small_button').addEventListener('click', function(e) {
                     socket.emit('needSmallShape');
+                    document.querySelector('#done_button').setAttribute('material', 'src', '#done_tex');
                 });
                 document.querySelector('#med_button').addEventListener('click', function(e) {
                     socket.emit('needMedShape');
+                    document.querySelector('#done_button').setAttribute('material', 'src', '#done_tex');
+
                 });
                 document.querySelector('#big_button').addEventListener('click', function(e) {
                     socket.emit('needBigShape');
+                    document.querySelector('#done_button').setAttribute('material', 'src', '#done_tex');
+
                 });
                 document.querySelector('#done_button').addEventListener('click', function(e) {
                     socket.emit('complete', objList);
@@ -35,18 +42,51 @@
             socket.on('connect', function(socket) {
                 console.log("connected!");
             });
+            socket.on('gameOver', function(data) {
+                if(data[0][1] == data[1][1])
+                {
+                    if(data[0][0] > data[1][0])
+                    {
+                        socket.emit('lose');
+                    }
+                    else {
+                        socket.emit('Success');
+                    }
+                }
+                else if(data[0][1] == 'win'){
+                    socket.emit('Success');
+                }
+                else {
+                    socket.emit('lose');
+                }
+            });
+            socket.on('switch', function() {
+                window.location.href='/remote.html';
 
+                });
+            socket.on('lose', function() {
+                    document.querySelector('#done_button').setAttribute('material', 'src', '#lose_tex');
+                });
+            socket.on('win', function(data) {
+                    let confetti = document.createElement('a-entity');
+                    confetti.setAttribute('particle-system', {
+                        color: '#EF0000, #44CC00',
+                    });
+                    confetti.setAttribute('position', {x:0, y:0, z:1});
+
+                    document.querySelector('#done_button').setAttribute('material', 'src', '#win_tex');
+
+                    scene.appendChild(confetti);
+                });
             socket.on('appendShape', function(data) {
                 console.log('New Shape Received');
                 console.log(data);
                 let newEl = document.createElement('a-entity');
-                newEl.setAttribute('geometry', data.id);   //{primitive: data.description.id}
-                newEl.attributes.geometry.value="primitive:" + data.id; //.description.id;
-                newEl.object3D.position.set(0, -1, -2);
+                newEl.setAttribute('geometry', {primitive: data.id, height: data.height, width: data.width});   //{primitive: data.description.id}
+                newEl.attributes.geometry.value="primitive:" + data.id + "; height:" + data.height + "; width:"+data.width; //.description.id;
 
-                newEl.addEventListener('click', function(e){
-                    placeObj(e);
-                });
+                newEl.object3D.position.set(0, -1, -2);
+                newEl.addEventListener('click', placeObj);
     
                 cursor.appendChild(newEl);
             });
@@ -54,16 +94,20 @@
             function placeObj(e){
                 let pos = e.target.object3D.localToWorld(e.target.object3D.position);
                 pos = [pos.x, pos.y, pos.z];
-                newObj = {srcElement: {components: {geometry: {attrValue: {primitive: e.srcElement.components.geometry.attrValue.primitive}}}}, detail: {cursorEl: {attributes: {position: {value: pos}} }}};
+                console.log(e);
+                newObj = {srcElement: {components: {geometry: {attrValue: {primitive: e.srcElement.components.geometry.attrValue.primitive}}}}, 
+                            detail: {cursorEl: {attributes: {position: {value: pos}}}}, 
+                            height: e.srcElement.components.geometry.attrValue.height, 
+                            width: e.srcElement.components.geometry.attrValue.width};
+                            console.log('NEWOBJ', newObj);
                 objList.push(newObj);
                 wrapper.appendChild(e.target);
-                //newEl.setAttribute('position', pos);
-                console.log(e.target);
+                e.target.removeEventListener('click', placeObj);
             };
         };
         </script>
 
-        <a-scene physics="debug: true; restitution: 0.3">
+        <a-scene>
             <!---------------- CAMERA ---------------->
             <a-entity id="cameraRig" position="0 2 0" rotation="0 0 0">
                 <a-camera id="sceneCamera">
@@ -72,23 +116,25 @@
             </a-entity>
 
 
-            <!---------------- LIGHTING ---------------->
-            <a-light type="ambient" color="white" position="35 5 0" intensity="0.6"></a-light>
-            <a-light type="ambient" color="white" position="-0.15682 5.09305 0" intensity="0.4" light="type:point;color:#f7a83e"></a-light>
-
-
+       
 
             <!---------------- A-FRAME ENTITIES ---------------->
         
             <!-- SOUNDS ENTITIES & TEXTURES-->
+            <img id="done_tex" src="assets/done_button_tex.jpg"></img>
+            <img id="create_tex" src="assets/create_button_tex.jpg"></img>
+
             <img id="small_tex" src="assets/small_button_tex.jpg"></img>
             <img id="med_tex" src="assets/med_button_tex.jpg"></img>
             <img id="big_tex" src="assets/big_button_tex.jpg"></img>
+            <img id="win_tex" src="assets/win_button_tex.jpg"></img>
+            <img id="lose_tex" src="assets/lose_button_tex.jpg"></img>
+
 
             <!-- <a-entity id="music" sound="src:#musicSrc; volume: 1; loop: true; positional:false" ></a-entity>
             <a-entity id="ambiance" sound="src:#ambianceSrc; volume: .4; loop: true; positional:false"></a-entity> -->
 
-            <a-plane id="done_button" position="-7 7 -6" width="5" height="2" rotation="0 15 0" material="src:#small_tex;" shadow></a-plane> 
+            <a-plane id="done_button" position="-9 7 -6" width="5" height="2" rotation="0 15 0" material="src:#create_tex;" shadow></a-plane> 
 
             <a-plane id="small_button" position="7 7 -6" width="5" height="2" rotation="0 -15 0" material="src:#small_tex;" shadow></a-plane> 
             <a-plane id="med_button" position="7 4.5 -6" width="5" height="2" rotation="0 -15 0" material="src:#med_tex;" shadow></a-plane> 
@@ -97,10 +143,10 @@
 
             <a-entity id="drawing" position="0 0 0"></a-entity>
 
-            <!-- GROUND & SKY -->
-            <a-plane static-body id="ground" position="0 0 5" width="30" height="30" rotation="-90 0 0" color="#a5a5a5" shadow></a-plane> 
+            <!-- SKY -->
                     
-            <a-sky color="#ECECEC" ></a-sky>
+            <img id="sky" src="/assets/bg.jpg"> 
+            <a-sky src="#sky" ></a-sky>
         </a-scene>
         <script>
             document.querySelector('a-scene').addEventListener('loaded', onSceneLoad);

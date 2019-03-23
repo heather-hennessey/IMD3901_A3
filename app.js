@@ -6,7 +6,7 @@ const server    = http.createServer(app);
 const socketIO  = require('socket.io')(server); //hello I am new
 
 const LISTEN_PORT = 8080; //make sure greater than 3000. Some ports are reserved/blocked by firewall ...
-
+var timer = [];
 app.use((express.static(__dirname + '/public'))); //set root dir to the public folder
 
 //routes
@@ -29,17 +29,21 @@ socketIO.on('connection', function(socket) {
     socket.on('disconnect', function(data) {
         console.log(socket.id + ' has disconnected');
     });
-
-    socket.on('compGame', function(data) {
-        console.log('COMPETE');
-        socket.broadcast.emit('remoteScreen', data);
-
+    socket.on('begin', function(data) {
+        socket.broadcast.emit('go', data);
     });
-    socket.on('collabGame', function(data) {
-        console.log('COLLAB');
-        socket.broadcast.emit('activeScreen', data);
-
+    socket.on('time', function(data) {
+        
+            timer.push(data);
+            if(timer.length == 2){
+                socketIO.sockets.emit('gameOver', timer);
+            }
+            else{
+            socketIO.sockets.emit('switch');
+            }
+        
     });
+    
     //custom events
     //socket = one client
     //socketIO.sockets = all clients
@@ -62,6 +66,12 @@ socketIO.on('connection', function(socket) {
     socket.on('complete', function(data) {
         console.log('Completed Drawing');
         socketIO.sockets.emit('recreate', data);
+    });
+    socket.on('Success', function(data) {
+        socket.broadcast.emit('lose');
+    });
+    socket.on('lose', function(data) {
+        socket.broadcast.emit('win');
     });
  
 

@@ -4,7 +4,10 @@
         <title>A3-Mobile</title>
         <script src="js/aframe-v0.8.2.min.js"></script>
         <script src="js/socket.io.min.js"></script>
+        <script src="https://unpkg.com/aframe-particle-system-component@1.0.x/dist/aframe-particle-system-component.min.js"></script>   <!--Particles-->
+
         <script>
+            var counter = 0;
             AFRAME.registerComponent('editable', {
                 schema: {
                     id: {default: 'entity'},
@@ -25,17 +28,22 @@
                     //this.followMouse = this.followMouse.bind(this);
                     //this.createMe = this.createMe.bind(this);
                 },
-                
+                tick: function(){
+                    counter++;
+                },
                 ondragStart: function(evt)
                 {
                     let el = evt.target;
-                    el.setAttribute('geometry', 'height', '0');
-                    console.log(el);
+                    el.setAttribute('height', 0);
+                    el.setAttribute('width', 0);
+
                     this.components['editable'].scale();
                 },
                 ondragEnd: function(evt)
                 {
                     this.components['editable'].stop();
+                    document.querySelector('#send_button').setAttribute('material', 'src', '#send_tex');
+
                 },
                 scale: function(){
                     this.el.sceneEl.canvas.addEventListener('mousemove', this.getPos);  
@@ -46,7 +54,15 @@
                 getPos: function(e){
                     
                     let h_size =  e.pageX / 100;
-                    this.el.setAttribute('geometry', 'height', h_size);
+                    let w_size = e.pageY / 100;
+                    this.el.setAttribute('geometry', {height: h_size, width: w_size});
+
+                    this.el.attributes.height.value= h_size;
+                    this.el.attributes.width.value= w_size;
+
+
+                    console.log("THIS", this.el);
+
                 }
             });
         </script>
@@ -56,40 +72,82 @@
         <script>
             function onSceneLoad(){
                 let socket = io();
-                var currObj = {id:"box", height: 0};
+                var currObj = {id:"box", height: 0, width:0};
                 let wrapper = document.querySelector('#workspace');
                 let scene = document.querySelector('a-scene');
                 document.querySelector('#box_Init').addEventListener('click', createEl);
-                document.querySelector('#sphere_Init').addEventListener('click', createEl);
-                document.querySelector('#cylinder_Init').addEventListener('click', createEl);
-                document.querySelector('#send_button').addEventListener('click', function(e)
+                // document.querySelector('#sphere_Init').addEventListener('click', createEl);
+                // document.querySelector('#cylinder_Init').addEventListener('click', createEl);
+                document.querySelector('#send_button').addEventListener('click', sendIt);
+                function sendIt(e)
                 {
                     obj = wrapper.querySelector('#'+currObj.id);
-                    currObj.height = obj.height;
+                    console.log("OBJ", obj);
+                    currObj.height = obj.attributes.height.value;
+                    currObj.width = obj.attributes.width.value;
+                    console.log("CURR", currObj);
                     socket.emit('newShape', currObj);
                     wrapper.removeChild(obj);
-                });
+                };
                 
                 
                 //default connect event
                 socket.on('connect', function() {
                     console.log("connected!");
                 });
-        
+                
+                socket.on('lose', function() {
+                    document.querySelector('#bear').setAttribute('material', 'src', '#lose_tex');
+                    
+
+                });
+                socket.on('switch', function() {
+                    window.location.href='/active.html';
+
+                });
+                socket.on('win', function(data) {
+                    let confetti = document.createElement('a-entity');
+                    confetti.setAttribute('particle-system', {
+                        color: '#EF0000, #44CC00',
+
+                    });
+                    confetti.setAttribute('position', {x:0, y:0, z:1});
+                    document.querySelector('#bear').setAttribute('material', 'src', '#win_tex');
+
+                    scene.appendChild(confetti);
+                    
+
+                });
                 socket.on('requestSmall', function(data) {
-                    console.log('Small boi');
+                    document.querySelector('#send_button').setAttribute('material', 'src', '#small_tex');
+
                 });
 
                 socket.on('requestMed', function(data) {
-                    console.log('Med boi');
+                    document.querySelector('#send_button').setAttribute('material', 'src', '#med_tex');
                 });
                 socket.on('requestBig', function(data) {
-                    console.log('Big boi');
+                    document.querySelector('#send_button').setAttribute('material', 'src', '#big_tex');
                 });
                 socket.on('recreate', function(data) {
+                    document.querySelector('#box_Init').setAttribute('position', {x: -20, y: -20, z: 10});
+                    // document.querySelector('#sphere_Init').setAttribute('position', {x: -20, y: -20, z: 10});
+                    document.querySelector('#send_button').setAttribute('position', {x: -20, y: -20, z: 10});
+                    // document.querySelector('#cylinder_Init').setAttribute('position', {x: -20, y: -20, z: 10});
+                    document.querySelector('#dog').setAttribute('material', 'visible', 'true');
+                    document.querySelector('#horse').setAttribute('material', 'visible', 'true');
+                    document.querySelector('#bear').setAttribute('material', 'visible', 'true');
+                    document.querySelector('#dog').addEventListener('click', verify);
+                    document.querySelector('#horse').addEventListener('click', verify);
+                    document.querySelector('#bear').addEventListener('click', verify);
+
+
                     for(i in data)
                     {
-                        createEl(data[i]);
+                        console.log(data[i]);
+                        let obj = createEl(data[i]);
+                        obj.removeAttribute('editable');
+                        obj.setAttribute('geometry', {height: data[i].height, width: data[i].width});
                     }
                     
                 });
@@ -102,43 +160,66 @@
                     newEl.object3D.position.set(pos[0], pos[1]-1,pos[2]);
 
                     newEl.setAttribute('id', e.srcElement.components.geometry.attrValue.primitive);
-                    console.log(newEl);
-                    //currObj.id = newEl.id;
+                    console.log(e);
+                    currObj.id = newEl.id;
 
                     newEl.setAttribute('editable', '');
                     wrapper.appendChild(newEl);
+                    return newEl;
                 };
-              
+              function verify(e)
+              {
+                const timer = counter;
+                data=[timer];
+                if(e.target.id == 'bear'){
+                    data.push('win');
+                    socket.emit('time', data);
+                } 
+                else{
+                    data.push('lose');
+                    socket.emit('time', data);
+                }
+              };
 
         };
         </script>
 
         <a-scene>
             <!---------------- CAMERA ---------------->
-            <a-entity id="cameraRig" position="" rotation="0 0 0">
-                <a-entity camera id="sceneCamera" position="0 5 0"
-                            look-controls-enabled='false'>
+                <a-entity camera id="sceneCamera" position="0 5 0">
                     <a-entity id="cursor" 
                             cursor="rayOrigin: mouse" 
                             position="0 0 -1">
                     </a-entity>
                 </a-entity>
-            </a-entity>
 
             <!---------------- A-FRAME ENTITIES ---------------->
 
             <a-box id="box_Init" position="5 7 -6"></a-box>
-            <a-sphere id="sphere_Init" position="5 4.5 -6"></a-sphere>
-            <a-cylinder id="cylinder_Init" position="5 2 -6"></a-cylinder>
-            
+            <!-- <a-sphere id="sphere_Init" position="5 4.5 -6"></a-sphere>
+            <a-cylinder id="cylinder_Init" position="5 2 -6"></a-cylinder> -->
+            <img id="send_tex" src="/assets/send_button_tex.jpg"> 
+            <img id="g1_tex" src="/assets/g1_button_tex.jpg"> 
+            <img id="g2_tex" src="/assets/g2_button_tex.jpg"> 
+            <img id="g3_tex" src="/assets/g3_button_tex.jpg"> 
+            <img id="small_tex" src="assets/small_button_tex.jpg"></img>
+            <img id="med_tex" src="assets/med_button_tex.jpg"></img>
+            <img id="big_tex" src="assets/big_button_tex.jpg"></img>
+            <img id="win_tex" src="assets/win_button_tex.jpg"></img>
+
+            <img id="lose_tex" src="assets/lose_button_tex.jpg"></img>
+
+
+
             <a-entity id="workspace" position="0 4 -3"></a-entity>
-            <a-plane id="send_button" position="-6 7 -6" width="3" height="2" rotation="0 15 0" material="src:#small_tex;" shadow></a-plane> 
+            <a-plane id="send_button" position="-6 7 -6" width="3" height="2" rotation="0 15 0" material="src:#send_tex;" shadow></a-plane> 
+            <a-plane id="dog" position="6 7 -7" width="5" height="2" rotation="0 -15 0" material="src:#g1_tex; visible:false" shadow></a-plane> 
+            <a-plane id="horse" position="6 4.5 -7" width="5" height="2" rotation="0 -15 0" material="src:#g2_tex; visible:false" shadow></a-plane> 
+            <a-plane id="bear" position="6 2 -7" width="5" height="2" rotation="0 -15 0" material="src:#g3_tex; visible:false" shadow></a-plane> 
 
-
-            <!-- GROUND & SKY -->
-            <a-plane static-body id="ground" position="0 0 5" width="30" height="30" rotation="-90 0 0" color="#a5a5a5" shadow></a-plane> 
-                                
-            <a-sky color="#bfd7ff" ></a-sky>
+            <!-- SKY -->
+            <img id="sky" src="/assets/bg.jpg"> 
+            <a-sky src="#sky" ></a-sky>
         </a-scene>
 
 
